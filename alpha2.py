@@ -140,6 +140,52 @@ def intGamDel(r,alpha,beta):
 
 	return gamma,delta
 
+def chooseK(alpha,N):
+	alpha = max([alpha,0.3])
+	alpha = min([alpha,1.9])
+	N = max([N,200])
+	N = min([N,1600])
+	al = [1.9,1.5,1.3,1.1,0.9,0.7,0.5,0.3]
+	n = [200,800,1600]
+
+	a,b = np.meshgrid(al,n)
+
+	Kmat = np.array([[9,9,9],
+		[11,11,11],
+		[22,16,14],
+		[24,18,15],
+		[28,22,18],
+		[30,24,20],
+		[86,68,56],
+		[134,124,118]]).T
+
+	K = interp.griddata(np.array([a.ravel(),b.ravel()]).T,Kmat.ravel(),np.array([alpha,N]).T)
+
+	return int(round(K[0]))
+
+def chooseL(alpha,N):
+	alpha = max([alpha,0.3])
+	alpha = min([alpha,1.9])
+	N = max([N,200])
+	N = min([N,1600])
+	al = [1.9,1.5,1.1,0.9,0.7,0.5,0.3]
+	n = [200,800,1600]
+
+	a,b = np.meshgrid(al,n)
+
+	Kmat = np.array([[9,10,11],
+			[12,14,15],
+			[16,18,17],
+			[14,14,14],
+			[24,16,16],
+			[40,24,20],
+			[70,68,66]]).T
+
+	L = interp.griddata(np.array([a.ravel(),b.ravel()]).T,Kmat.ravel(),np.array([alpha,N]).T)
+
+	return int(round(L[0]))
+
+
 def estimate(r):
 
 	iterate = 0
@@ -147,6 +193,9 @@ def estimate(r):
 	alphaold,betaold = intAlpBet(r)
 	gamold,deltaold = intGamDel(r,alphaold,betaold)
 
+	N = len(r)
+
+	alpha = alphaold
 	beta = betaold
 	gam = gamold
 	delta = deltaold
@@ -163,7 +212,9 @@ def estimate(r):
 		if gam ==0:
 			gam = np.std(r)
 
-		test = [pi*k/25 for k in range(1,15)]
+		K = chooseK(alpha,N)
+
+		test = [pi*k/25 for k in range(1,K+1)]
 
 		X = ln(test).reshape(-1,1)
 		Y = np.array([ln(-ln(aecf(t,r)**2)) for t in test]).T
@@ -185,7 +236,9 @@ def estimate(r):
 		beta = np.max([beta,-1])
 		gam = np.max([gam,0])
 
-		unit = [pi*k/50 for k in range(1,15)]
+		L = chooseL(alpha,N)
+
+		unit = [pi*k/50 for k in range(1,L+1)]
 		X1 = np.array(unit)
 		X2 = np.array([np.sign(u)*np.absolute(u)**alpha for u in unit])
 		X = np.array([X1,X2]).T
@@ -219,15 +272,20 @@ def estimate(r):
 if __name__ == "__main__":
 
 
-	alpha = 0.7
-	beta = -0.5
-	r = levy_stable.rvs(alpha, beta,loc =0, scale = 1, size=1000)
+	alpha = 1.5
+	beta = 0
+	r = levy_stable.rvs(alpha, beta,loc =2, scale = 1, size=1600)
 	#plt.show()
 
 	#alpha,beta = intAlpBet(r)
 	#gamma,delta = intGamDel(r,alpha,beta)
 
 	print (estimate(r))
+
+
+
+	
+	
 
 
 
