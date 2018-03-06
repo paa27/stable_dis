@@ -8,6 +8,8 @@ from math import pi
 from cmath import exp
 from sklearn import datasets, linear_model
 from sklearn.metrics import mean_squared_error, r2_score
+import pandas as pd
+
 def ecf(u,r):
 
 	total = 0.0
@@ -272,16 +274,31 @@ def estimate(r):
 if __name__ == "__main__":
 
 
-	alpha = 1.5
-	beta = 0
-	r = levy_stable.rvs(alpha, beta,loc =2, scale = 1, size=1600)
-	#plt.show()
+	alphas = np.linspace(0.1,2,10)
+	betas = np.linspace(-1,1,10)
+	errorsa = np.zeros((len(alphas),len(betas)))
+	errorsb = np.zeros((len(alphas),len(betas)))
 
-	#alpha,beta = intAlpBet(r)
-	#gamma,delta = intGamDel(r,alpha,beta)
+	for i in range(len(alphas)):
+		alpha = alphas[i]
+		for j in range(len(betas)):
+			beta = betas[j]
+			r = levy_stable.rvs(alpha, beta,loc =0, scale = 1, size=10000000)
 
-	print (estimate(r))
+			k = estimate(r)
 
+			errorsa[i][j] = np.absolute((k[0][0]) - alpha)/alpha
+			errorsb[i][j] = np.absolute(k[1][0]-beta)/beta
+
+
+	'''
+	pd.DataFrame(errorsa,index = alphas,columns = betas).to_csv('/alpha_err.csv')
+	pd.DataFrame(errorsb,index = alphas,columns = betas).to_csv('/beta_err.csv')
+	'''
+	
+
+	np.savetxt('errorsa.csv',errorsa,fmt='%.4e',delimiter = ',')
+	np.savetxt('errorsb.csv',errorsb,fmt='%.4e',delimiter = ',')
 
 
 	
